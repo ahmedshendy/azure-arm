@@ -2,19 +2,89 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "apiProfile": "2018-06-01-profile",
-    "parameters": {},
-    "variables": {},
+    "parameters": {
+        "env": {
+            "type": "string",
+            "metadata": {
+                "description": "Environment name"
+            }
+        },
+        "vnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "VNet name"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        },
+        "vnetAddressPrefix": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/16",
+            "metadata": {
+              "description": "Address prefix"
+            }
+          },
+        "subnets": {
+            "type": "array",
+            "defaultValue": [
+                {
+                    "name": "MY-VNET-0-SUBNET",
+                    "subnetCIDR": "10.0.0.0/24"
+                }
+            ]
+        }
+    },
+    "variables": {
+        "templateBaseUrl": "https://raw.githubusercontent.com/ahmedshendy/azure-arm/master/linked_templates/",
+        "vnetTemplateUrl": "[concat(variables('templateBaseUrl'), 'vnet.json')]",
+        "storageAccountTemplateUrl": "[concat(variables('templateBaseUrl'), 'storage_account.json')]"
+    },
     "resources": [
         {
             "type": "Microsoft.Resources/deployments",
-            "name": "linkedTemplate",
+            "name": "[parameters('vnetName')]",
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri":"C:\/Users\/ashendy\/Documents\/repos\/inf\/linked_templates\/vnet.json')]",
+                    "uri":"[variables('vnetTemplateUrl')]",
                     "contentVersion":"1.0.0.0"
-                }
+                },
+                "parameters": {
+                   "vnetName":{"value": "[parameters('vnetName')]"},
+                   "vnetAddressPrefix":{"value": "[parameters('vnetAddressPrefix')]"},
+                   "subnets":{"value": "[parameters('subnets')]"}
+                 }
+            }
+          },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "name": "[concat('FRONT_END_',parameters('env'))]",
+            "resourceGroup": "[concat('FRONT_END_',parameters('env'),'_RG')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri":"[variables('storageAccountTemplateUrl')]",
+                    "contentVersion":"1.0.0.0"
+                },
+                "parameters": {
+                   "storageAccountName":{"value": "[concat('FRONT_END_',parameters('env'))]"}
+                 }
             }
           }
-    ]
+    ],
+    "outputs": {
+      "vnet": {
+        "type": "object",
+        "value": "[reference(parameters('vnetName')).vnet]"
+      },
+      "uiStorage":{
+          "type": "string",
+          "value": "[reference(parameters(concat('FRONT_END_',parameters('env')))).storageAccountName]"
+      }
+    }
 }

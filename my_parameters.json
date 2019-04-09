@@ -1,0 +1,31 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "env": {
+      "value": "MY"
+    },
+    "vnetName": {
+      "value": "[[concat(parameters(env),'VNET']"
+    },
+    "vnetAddressPrefix": {
+      "value": "10.0.0.0/16"
+    },
+    "subnets": {
+      "value": [
+        {
+          "name": "[concat(parameters('vnetName'),'-0-subnet')]",
+          "subnetCIDR": "10.0.0.0/24"
+        },
+        {
+          "name": "[concat(parameters('vnetName'),'-1-subnet')]",
+          "subnetCIDR": "10.0.1.0/24"
+        },
+        {
+          "name": "[concat(parameters('vnetName'),'-2-subnet')]",
+          "subnetCIDR": "10.0.2.0/24"
+        }
+      ]
+    }
+  }
+}
